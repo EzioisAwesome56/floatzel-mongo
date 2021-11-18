@@ -29,7 +29,7 @@ public class mongoDriver implements GenaricDatabase {
 
     @Override
     public String getProfile(String s) {
-        return g.toJson(utils.getUserFromDbObject(db.getCollection(profile).findOne(new BasicDBObject("_id", g.fromJson(s, User.class).getUid()))));
+        return g.toJson(utils.getUserFromDbObject(db.getCollection(profile).findOne(new BasicDBObject("_id", s))));
     }
 
     @Override
