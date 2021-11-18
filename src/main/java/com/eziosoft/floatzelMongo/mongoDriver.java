@@ -48,7 +48,11 @@ public class mongoDriver implements GenaricDatabase {
 
     @Override
     public boolean checkForUser(String s) {
-        return db.getCollection(profile).findOne(new BasicDBObject("_id", s)) != null;
+        boolean heck = db.getCollection(profile).findOne(new BasicDBObject("_id", s)) != null;
+        if (!heck){
+            db.getCollection(profile).insert(utils.userToDbObject(new User(s)));
+        }
+        return heck;
     }
 
     @Override
