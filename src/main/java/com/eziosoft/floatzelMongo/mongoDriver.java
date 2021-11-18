@@ -41,15 +41,9 @@ public class mongoDriver implements GenaricDatabase {
     @Override
     public void initDatabase() {
         System.out.println("Eziosoft MongoDB Driver starting up...");
-        try {
-            client = new MongoClient(new MongoClientURI("mongodb://" + info.getHost() + ":" + Integer.toString(info.getPort())));
-            db = client.getDB("floatzel");
-            // thats all for now apparently, mongo will just create the shit as it goes
-        } catch (UnknownHostException e) {
-            System.err.println("FATAL ERROR: an error has occurred while trying to connect to mongodb!");
-            e.printStackTrace();
-            System.exit(-2);
-        }
+        client = new MongoClient(new MongoClientURI("mongodb://" + info.getHost() + ":" + Integer.toString(info.getPort())));
+        db = client.getDB("floatzel");
+        // thats all for now apparently, mongo will just create the shit as it goes
     }
 
     @Override
