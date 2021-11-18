@@ -4,10 +4,13 @@ import com.eziosoft.floatzel.Objects.Stock;
 import com.eziosoft.floatzel.Objects.Tweet;
 import com.eziosoft.floatzel.Objects.User;
 import com.eziosoft.floatzel.SlashCommands.Objects.GuildSlashSettings;
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class utils {
 
@@ -20,14 +23,25 @@ public class utils {
                 .append("isAdmin", u.isAdmin());
     }
     public static User getUserFromDbObject(DBObject o){
-        return new User(
+        User temp = new User(
                 (String) o.get("_id"),
                 (int) o.get("bal"),
                 (long) o.get("lastloan"),
-                (Boolean[]) o.get("perms"),
+                new Boolean[]{false, false},
                 (int) o.get("stockid"),
                 (boolean) o.get("isAdmin")
         );
+        BasicDBList list = (BasicDBList) o.get("perms");
+        int i = 0;
+        Boolean[] blist = temp.getPerms();
+        for (Object bson : list){
+            if (bson instanceof Boolean){
+                blist[i] = (Boolean) bson;
+                i++;
+            }
+        }
+        temp.setPerms(blist);
+        return temp;
     }
 
     public static DBObject stockToDbObject(Stock s){
@@ -64,10 +78,11 @@ public class utils {
                 .append("registered", gss.getRegistered());
     }
     public static GuildSlashSettings dbObjectToGSS(DBObject dbo){
-        List<String> temp = (List<String>) dbo.get("registered");
         GuildSlashSettings gss = new GuildSlashSettings((String) dbo.get("_id"));
-        for (String s : temp){
-            gss.addRegistered(s);
+        for (Object o : (BasicDBList) dbo.get("registered")){
+            if (o instanceof String){
+                gss.addRegistered((String) o);
+            }
         }
         return gss;
     }

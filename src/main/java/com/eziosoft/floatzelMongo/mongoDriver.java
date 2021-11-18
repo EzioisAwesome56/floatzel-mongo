@@ -19,7 +19,6 @@ public class mongoDriver implements GenaricDatabase {
     private static String profile = "profile";
     private static String stock = "stock";
     private static String tweets = "tweets";
-    private static String perm = "permission";
     private static String slash = "slash";
 
     @Override
