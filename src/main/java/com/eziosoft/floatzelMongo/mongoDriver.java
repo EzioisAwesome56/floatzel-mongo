@@ -5,6 +5,9 @@ import com.eziosoft.floatzel.SlashCommands.Objects.GuildSlashSettings;
 import com.google.gson.Gson;
 import com.mongodb.*;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,5 +138,127 @@ public class mongoDriver implements GenaricDatabase {
             temp.add(utils.dbObjectToGSS(cur.next()));
         }
         return temp.toArray(new GuildSlashSettings[]{});
+    }
+
+    @Override
+    public void LowLevelDB_Save(Object in, Class<?> type, String table) {
+        // check to see if object is of the type we were given
+        if (!type.isInstance(in)){
+            System.err.println("Error: provided object is not of provided type " + type.getName());
+            return;
+        }
+        // check to see if theres a feild with a defined primary key in it already
+        Field primaryField = null;
+        for (Field f : type.getDeclaredFields()){
+            try {
+                assert f.getAnnotation(PrimaryKey.class) != null;
+            } catch (AssertionError e){
+                continue;
+            }
+            primaryField = f;
+            break;
+        }
+        // if the field is still null, crash
+        if (primaryField == null){ throw new RuntimeException("Could not find primary field via annotations!"); }
+        // create new DBOBject
+        BasicDBObject basic = new BasicDBObject();
+        Object fak = null;
+        try {
+            // loop thru the provided object to get all its values
+            for (Field f : type.getDeclaredFields()) {
+                // make the field accessible to us!
+                f.setAccessible(true);
+                // is this field the primary key?
+                assert f.get(in) != null;
+                if (f.equals(primaryField)) {
+                    basic.append("_id", f.get(in));
+                    fak = f.get(in);
+                } else {
+                    // if its not, just use the name of the field for storing it
+                    basic.append(f.getName(), f.get(in));
+                }
+            }
+        } catch (Exception e){
+            System.err.println("Fatal error while reading object!");
+            e.printStackTrace();
+            return;
+        }
+        assert fak != null;
+        // ok, we have our object, now we have to check to see if we need to insert it or update it
+        if (db.getCollection(table).findOne(new BasicDBObject("_id", fak)) == null){
+            db.getCollection(table).insert(basic);
+        } else {
+            db.getCollection(table).update(new BasicDBObject("_id", fak), basic);
+        }
+    }
+
+    @Override
+    public Object LowLevelDB_Load(String table, String pkey, Class<?> type) {
+        // first check if theres even an entry for the request in the db. if not, return null
+        if (db.getCollection(table).findOne(new BasicDBObject("_id", pkey)) == null){
+            return null;
+        }
+        // next we load the dbobject from the db
+        DBObject dbo = db.getCollection(table).findOne(new BasicDBObject("_id", pkey));
+        // we need to get the name of the primary key field
+        String pfieldname = null;
+        for (Field f : type.getDeclaredFields()){
+            try {
+                assert f.getAnnotation(PrimaryKey.class) != null;
+            } catch (AssertionError e){
+                continue;
+            }
+            pfieldname = f.getName();
+            break;
+        }
+        if (pfieldname == null){
+            System.err.println("could not find primary key field via annotations!");
+            return null;
+        }
+        // make a new object from the provided type
+        Object out = null;
+        try {
+            out = type.getConstructor().newInstance();
+        } catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+        try {
+            // next, load the values into each field in the object
+            for (Field f : type.getDeclaredFields()) {
+                // make it accessible
+                f.setAccessible(true);
+                // is this field the primary key?
+                if (f.getName().equals(pfieldname)) {
+                    // apparently, it is, so do stuff here
+                    f.set(out, dbo.get("_id"));
+                } else {
+                    Object t = dbo.get(f.getName());
+                    if (t instanceof BasicDBList){
+                        // oh piss this is a list, first get what type of data goes in the list
+                        List<Object> temp = new ArrayList<Object>();
+                        for (Object bson : (BasicDBList) t){
+                            temp.add(bson);
+                        }
+                        // store the list in the field depending on what type it is
+                        if (f.getGenericType() instanceof ParameterizedType){
+                            f.set(out, temp);
+                        } else {
+                            f.set(out, temp.toArray());
+                        }
+                    } else {
+                        // not a list, store it as-is
+                        f.set(out, t);
+                    }
+                }
+                // set it to be non-accesible again
+                f.setAccessible(false);
+            }
+            // return our object
+            return out;
+        } catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
     }
 }
