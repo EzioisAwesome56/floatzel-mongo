@@ -6,7 +6,7 @@
 
     <groupId>com.eziosoft</groupId>
     <artifactId>floatzelMongo</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 
     <repositories>
         <repository>
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>com.github.EzioisAwesome56</groupId>
             <artifactId>Floatzel</artifactId>
-            <version>bc4d24548a96b5ba152848c881d3ff86fceb3f94</version>
+            <version>3d62234cfa7c9c0664255a8984889fb191ae07c5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
