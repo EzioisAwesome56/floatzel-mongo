@@ -150,13 +150,10 @@ public class mongoDriver implements GenaricDatabase {
         // check to see if theres a feild with a defined primary key in it already
         Field primaryField = null;
         for (Field f : type.getDeclaredFields()){
-            try {
-                assert f.getAnnotation(PrimaryKey.class) != null;
-            } catch (AssertionError e){
-                continue;
+            if (f.getAnnotation(PrimaryKey.class) != null){
+                primaryField = f;
+                break;
             }
-            primaryField = f;
-            break;
         }
         // if the field is still null, crash
         if (primaryField == null){ throw new RuntimeException("Could not find primary field via annotations!"); }
@@ -169,7 +166,9 @@ public class mongoDriver implements GenaricDatabase {
                 // make the field accessible to us!
                 f.setAccessible(true);
                 // is this field the primary key?
-                assert f.get(in) != null;
+                if (f.get(in) == null){
+                    throw new RuntimeException("Error while trying to access field data!");
+                }
                 if (f.equals(primaryField)) {
                     basic.append("_id", f.get(in));
                     fak = f.get(in);
@@ -183,7 +182,10 @@ public class mongoDriver implements GenaricDatabase {
             e.printStackTrace();
             return;
         }
-        assert fak != null;
+        if (fak == null){
+            System.err.println("Error while creating object to query with!");
+            return;
+        }
         // ok, we have our object, now we have to check to see if we need to insert it or update it
         if (db.getCollection(table).findOne(new BasicDBObject("_id", fak)) == null){
             db.getCollection(table).insert(basic);
@@ -203,13 +205,10 @@ public class mongoDriver implements GenaricDatabase {
         // we need to get the name of the primary key field
         String pfieldname = null;
         for (Field f : type.getDeclaredFields()){
-            try {
-                assert f.getAnnotation(PrimaryKey.class) != null;
-            } catch (AssertionError e){
-                continue;
+            if (f.getAnnotation(PrimaryKey.class) != null){
+                pfieldname = f.getName();
+                break;
             }
-            pfieldname = f.getName();
-            break;
         }
         if (pfieldname == null){
             System.err.println("could not find primary key field via annotations!");

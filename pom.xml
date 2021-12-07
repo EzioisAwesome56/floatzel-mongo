@@ -19,7 +19,7 @@
         <dependency>
             <groupId>com.github.EzioisAwesome56</groupId>
             <artifactId>Floatzel</artifactId>
-            <version>3d62234cfa7c9c0664255a8984889fb191ae07c5</version>
+            <version>3d62234cfa</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
