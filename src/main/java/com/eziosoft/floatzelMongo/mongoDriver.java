@@ -260,4 +260,14 @@ public class mongoDriver implements GenaricDatabase {
             return null;
         }
     }
+
+    @Override
+    public int LowLevelDB_Count(String table) {
+        return (int) db.getCollection(table).count();
+    }
+
+    @Override
+    public void LowLevelDB_Delete(String table, String pkey) {
+        db.getCollection(table).remove(new BasicDBObject("_id", pkey));
+    }
 }
